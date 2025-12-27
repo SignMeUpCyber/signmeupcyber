@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 1: New Employee Workstation Setup - Security Controls</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f0f0;
+            overflow: hidden;
+        }
+
+        /* Welcome Screen */
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            color: white;
+            text-align: center;
+            padding: 40px;
+        }
+
+        #welcome-screen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            animation: fadeInDown 1s ease;
+        }
+
+        #welcome-screen p {
+            font-size: 24px;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease;
+        }
+
+        #welcome-screen button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 20px 60px;
+            font-size: 20px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            animation: fadeIn 1.5s ease;
+        }
+
+        #welcome-screen button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Main App Container */
+        #app {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Navigation Bar */
+        #top-nav {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        #top-nav h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            background: #34495e;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s;
+            position: relative;
+        }
+
+        .nav-btn:hover {
+            background: #415568;
+        }
+
+        .nav-btn.active {
+            background: #DEC381;
+            color: #1a1c1f;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        #time-display {
+            font-size: 16px;
+            color: #ecf0f1;
+        }
+
+        .deadline-warning {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        /* Main Content Area */
+        #main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Sidebar - Checklist */
+        #sidebar {
+            width: 320px;
+            background: white;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .checklist {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .checklist h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checklist-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #95a5a6;
+            transition: all 0.3s;
+        }
+
+        .checklist-item.completed {
+            border-left-color: #27ae60;
+            background: #e8f5e9;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .progress-bar {
+            background: #ecf0f1;
+            height: 25px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        /* Ticket Notes */
+        .ticket-notes {
+            background: #fff9e6;
+            border: 1px solid #f1c40f;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .ticket-notes h4 {
+            color: #d68910;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .note-entry {
+            font-size: 12px;
+            padding: 5px 0;
+            border-bottom: 1px solid #f9e79f;
+            color: #7d6608;
+        }
+
+        .note-entry:last-child {
+            border-bottom: none;
+        }
+
+        /* Main Workspace */
+        #workspace {
+            flex: 1;
+            background: #0078d4;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* Windows Desktop */
+        .windows-desktop {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0078d4 0%, #00bcf2 100%);
+            position: relative;
+            padding: 40px;
+            overflow: auto;
+        }
+
+        .desktop-icon {
+            width: 80px;
+            text-align: center;
+            margin: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .desktop-icon:hover {
+            transform: scale(1.05);
+        }
+
+        .desktop-icon img {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 5px;
+        }
+
+        .desktop-icon span {
+            color: white;
+            font-size: 12px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            display: block;
+        }
+
+        /* Windows Taskbar */
+        .windows-taskbar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 48px;
+            background: rgba(26, 28, 31, 0.8);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 0 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .taskbar-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .taskbar-icon:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .taskbar-clock {
+            margin-left: auto;
+            color: white;
+            font-size: 13px;
+            padding: 0 15px;
+        }
+
+        /* Application Windows */
+        .app-window {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: none;
+            flex-direction: column;
+            min-width: 500px;
+            min-height: 400px;
+            max-width: 85vw;
+            max-height: 85vh;
+            width: 700px;
+            height: 600px;
+        }
+
+        .app-window.active {
+            display: flex;
+            z-index: 100;
+        }
+
+        .window-titlebar {
+            background: #f0f0f0;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+            border-radius: 8px 8px 0 0;
+            cursor: move;
+        }
+
+        .window-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .window-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .window-control.close { background: #e74c3c; }
+        .window-control.minimize { background: #f39c12; }
+        .window-control.maximize { background: #27ae60; }
+
+        .window-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Modal/Overlay Panels */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .modal-header h2 {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+
+        .modal-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        /* Email Interface */
+        .email-list {
+            list-style: none;
+        }
+
+        .email-item {
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .email-item:hover {
+            background: #f8f9fa;
+        }
+
+        .email-item.unread {
+            background: #e8f4f8;
+            font-weight: 600;
+        }
+
+        .email-sender {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .email-subject {
+            color: #34495e;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .email-time {
+            color: #95a5a6;
+            font-size: 12px;
+        }
+
+        .email-body {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        /* Ticket Interface */
+        .ticket-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            margin: -30px -30px 20px -30px;
+        }
+
+        .ticket-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .status-assigned { background: #f39c12; }
+        .status-in-progress { background: #3498db; }
+        .status-complete { background: #27ae60; }
+
+        .ticket-field {
+            margin-bottom: 15px;
+        }
+
+        .ticket-field label {
+            font-weight: 600;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .ticket-field p {
+            color: #34495e;
+            line-height: 1.6;
+        }
+
+        .attachment-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .attachment-item {
+            padding: 10px;
+            background: #ecf0f1;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .attachment-item:hover {
+            background: #d5dbdb;
+        }
+
+        /* Security Settings Interfaces */
+        .settings-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .setting-group {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .setting-group:last-child {
+            border-bottom: none;
+        }
+
+        .setting-group h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .setting-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-label {
+            color: #34495e;
+            font-size: 14px;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background: #95a5a6;
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.on {
+            background: #27ae60;
+        }
+
+        .toggle-slider {
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+
+        .toggle-switch.on .toggle-slider {
+            left: 26px;
+        }
+
+        /* Policy Editor */
+        .policy-editor {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .policy-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .policy-label {
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        .policy-value {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100px;
+        }
+
+        /* Notification Toasts */
+        .toast-notification {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            align-items: center;
+            gap: 15px;
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+            max-width: 400px;
+        }
+
+        .toast-notification.show {
+            display: flex;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-icon {
+            font-size: 24px;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 3px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+
+        .toast-close {
+            cursor: pointer;
+            color: #95a5a6;
+            font-size: 20px;
+        }
+
+        /* Decision Point Dialog */
+        .decision-dialog {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .decision-dialog h3 {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .decision-dialog p {
+            color: #34495e;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .decision-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .decision-option {
+            padding: 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .decision-option:hover {
+            border-color: #3498db;
+            background: #ebf5fb;
+        }
+
+        .decision-option input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        /* Results Screen */
+        .results-screen {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .results-score {
+            font-size: 72px;
+            font-weight: bold;
+            color: #27ae60;
+            margin: 20px 0;
+        }
+
+        .results-grade {
+            font-size: 32px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        .results-breakdown {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .result-item.failed {
+            border-left-color: #e74c3c;
+        }
+
+        .result-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        .result-details {
+            flex: 1;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .result-description {
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+
+        .manager-review {
+            background: #e8f5e9;
+            border-left: 4px solid #27ae60;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #DEC381;
+            color: #1a1c1f;
+        }
+
+        .btn-primary:hover {
+            background: #C89850;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(222, 195, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .btn-secondary:hover {
+            background: #d5dbdb;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .centered {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            #sidebar {
+                width: 280px;
+            }
+
+            .app-window {
+                min-width: 400px;
+                width: 600px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 250px;
+                font-size: 13px;
+            }
+
+            .app-window {
+                min-width: 350px;
+                width: 90vw;
+                max-width: 90vw;
+            }
+
+            .checklist-item {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div id="welcome-screen">
+        <h1>🔐 Security Lab 1</h1>
+        <p>New Employee Workstation Setup</p>
+        <p style="font-size: 18px; margin-bottom: 30px;">Monday, 9:00 AM - Your first week as Junior Security Analyst</p>
+        <button onclick="startLab()">START YOUR DAY →</button>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app">
+        <!-- Top Navigation -->
+        <div id="top-nav">
+            <h2>🎫 Ticket #2847 | Sign Me Up Cyber - IT Security</h2>
+            <div class="nav-buttons">
+                <button class="nav-btn" id="email-btn" onclick="openEmail()">
+                    📧 Email
+                    <span class="notification-badge" id="email-badge">3</span>
+                </button>
+                <button class="nav-btn" id="ticket-btn" onclick="openTicket()">
+                    🎫 Ticket
+                </button>
+                <button class="nav-btn" id="help-btn" onclick="showHelp()">
+                    ❓ Help
+                </button>
+            </div>
+            <div id="time-display">
+                ⏰ <span id="current-time">9:00 AM</span> | 
+                Deadline: <span id="deadline-time">1:00 PM</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content">
+            <!-- Left Sidebar -->
+            <div id="sidebar">
+                <!-- Checklist -->
+                <div class="checklist">
+                    <h3>📋 Security Baseline Requirements</h3>
+                    
+                    <div class="checklist-item" id="check-1">
+                        <input type="checkbox" id="cb-1" disabled>
+                        <label for="cb-1" style="font-weight: 600;">1. Malware Protection</label>
+                        <div style="font-size: 11px; color: #555; margin-top: 5px; line-height: 1.4;">
+                            <strong>Location:</strong> Windows Security app<br>
+                            <strong>Enable:</strong><br>
+                            • Real-time protection<br>
+                            • Cloud-delivered protection<br>
+                            • Automatic sample submission<br>
+                            <strong>Verify:</strong> Status "No actions needed"
+                        </div>
+                    </div>
+
+                    <div class="checklist-item" id="check-2">
+                        <input type="checkbox" id="cb-2" disabled>
+                        <label for="cb-2" style="font-weight: 600;">2. Password Security</label>
+                        <div style="font-size: 11px; color: #555; margin-top: 5px; line-height: 1.4;">
+                            <strong>Location:</strong> Local Security Policy<br>
+                            <strong>Configure:</strong><br>
+                            • Min password length: 12<br>
+                            • Password complexity: Enabled<br>
+                            • Enforce password history: 5<br>
+                            <strong>Test:</strong> Weak password should fail
+                        </div>
+                    </div>
+
+                    <div class="checklist-item" id="check-3">
+                        <input type="checkbox" id="cb-3" disabled>
+                        <label for="cb-3" style="font-weight: 600;">3. Audit & Monitoring</label>
+                        <div style="font-size: 11px; color: #555; margin-top: 5px; line-height: 1.4;">
+                            <strong>Location:</strong> Local Security Policy → Audit Policy<br>
+                            <strong>Enable:</strong><br>
+                            • Audit logon events: Success, Failure<br>
+                            • Audit account logon: Success, Failure
+                        </div>
+                    </div>
+
+                    <div class="checklist-item" id="check-4">
+                        <input type="checkbox" id="cb-4" disabled>
+                        <label for="cb-4" style="font-weight: 600;">4. Security Log Review</label>
+                        <div style="font-size: 11px; color: #555; margin-top: 5px; line-height: 1.4;">
+                            <strong>Location:</strong> Event Viewer → Security<br>
+                            <strong>Identify:</strong><br>
+                            • Event ID 4624 (successful logon)<br>
+                            • Event ID 4625 (failed logon)<br>
+                            <strong>Review:</strong> Recent security events
+                        </div>
+                    </div>
+
+                    <div class="checklist-item" id="check-5">
+                        <input type="checkbox" id="cb-5" disabled>
+                        <label for="cb-5" style="font-weight: 600;">5. Verification Complete</label>
+                        <div style="font-size: 11px; color: #555; margin-top: 5px; line-height: 1.4;">
+                            <strong>Confirm:</strong><br>
+                            • All controls enabled<br>
+                            • All controls tested<br>
+                            • All actions documented
+                        </div>
+                    </div>
+
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
+                    </div>
+                </div>
+
+                <!-- Ticket Notes -->
+                <div class="ticket-notes">
+                    <h4>📝 Ticket Notes (Auto-updating)</h4>
+                    <div id="notes-container">
+                        <div class="note-entry">9:00 AM - Ticket #2847 assigned</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Workspace -->
+            <div id="workspace">
+                <div class="windows-desktop">
+                    <!-- Desktop Icons -->
+                    <div style="display: flex; flex-wrap: wrap;">
+                        <div class="desktop-icon" onclick="openSecurityApp()">
+                            <div style="font-size: 48px;">🛡️</div>
+                            <span>Windows Security</span>
+                        </div>
+                        <div class="desktop-icon" onclick="openSecurityPolicy()">
+                            <div style="font-size: 48px;">⚙️</div>
+                            <span>Local Security Policy</span>
+                        </div>
+                        <div class="desktop-icon" onclick="openEventViewer()">
+                            <div style="font-size: 48px;">📊</div>
+                            <span>Event Viewer</span>
+                        </div>
+                        <div class="desktop-icon" onclick="openChecklist()">
+                            <div style="font-size: 48px;">📋</div>
+                            <span>Security Baseline</span>
+                        </div>
+                    </div>
+
+                    <!-- Taskbar -->
+                    <div class="windows-taskbar">
+                        <div class="taskbar-icon" onclick="showStartMenu()">⊞</div>
+                        <div class="taskbar-icon">🔍</div>
+                        <div class="taskbar-icon" onclick="openSecurityApp()">🛡️</div>
+                        <div class="taskbar-icon" onclick="openSecurityPolicy()">⚙️</div>
+                        <div class="taskbar-icon" onclick="openEventViewer()">📊</div>
+                        <div class="taskbar-clock" id="taskbar-clock">9:00 AM | Mon 9/4/2023</div>
+                    </div>
+                </div>
+
+                <!-- Application Windows -->
+                <!-- Windows Security App -->
+                <div class="app-window" id="security-app" style="top: 10%; left: 15%;">
+                    <div class="window-titlebar">
+                        <span class="window-title">🛡️ Windows Security</span>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp('security-app')"></div>
+                        </div>
+                    </div>
+                    <div class="window-content">
+                        <div class="settings-panel">
+                            <h3>Virus & threat protection</h3>
+                            <div class="setting-group">
+                                <h4>Virus & threat protection settings</h4>
+                                <div class="setting-toggle">
+                                    <span class="toggle-label">Real-time protection</span>
+                                    <div class="toggle-switch" id="realtime-toggle" onclick="toggleRealtime()">
+                                        <div class="toggle-slider"></div>
+                                    </div>
+                                </div>
+                                <div class="setting-toggle">
+                                    <span class="toggle-label">Cloud-delivered protection</span>
+                                    <div class="toggle-switch" id="cloud-toggle" onclick="toggleCloud()">
+                                        <div class="toggle-slider"></div>
+                                    </div>
+                                </div>
+                                <div class="setting-toggle">
+                                    <span class="toggle-label">Automatic sample submission</span>
+                                    <div class="toggle-switch" id="sample-toggle" onclick="toggleSample()">
+                                        <div class="toggle-slider"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="defender-status" style="padding: 15px; background: #fff3cd; border-radius: 8px; margin-top: 20px;">
+                                ⚠️ <strong>Action recommended:</strong> Enable protection features
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Local Security Policy -->
+                <div class="app-window" id="security-policy" style="top: 8%; left: 20%;">
+                    <div class="window-titlebar">
+                        <span class="window-title">⚙️ Local Security Policy</span>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp('security-policy')"></div>
+                        </div>
+                    </div>
+                    <div class="window-content">
+                        <div class="settings-panel">
+                            <h3>Account Policies → Password Policy</h3>
+                            <div class="policy-editor">
+                                <div class="policy-row">
+                                    <span class="policy-label">Minimum password length</span>
+                                    <input type="number" class="policy-value" id="min-length" value="8" min="0" max="20">
+                                </div>
+                                <div class="policy-row">
+                                    <span class="policy-label">Password must meet complexity requirements</span>
+                                    <select class="policy-value" id="complexity">
+                                        <option value="disabled">Disabled</option>
+                                        <option value="enabled">Enabled</option>
+                                    </select>
+                                </div>
+                                <div class="policy-row">
+                                    <span class="policy-label">Enforce password history</span>
+                                    <input type="number" class="policy-value" id="history" value="0" min="0" max="24">
+                                </div>
+                                <button class="btn btn-primary" onclick="applyPasswordPolicy()" style="margin-top: 20px;">Apply</button>
+                            </div>
+
+                            <h3 style="margin-top: 30px;">Local Policies → Audit Policy</h3>
+                            <div class="policy-editor">
+                                <div class="policy-row">
+                                    <span class="policy-label">Audit logon events</span>
+                                    <select class="policy-value" id="audit-logon">
+                                        <option value="none">No auditing</option>
+                                        <option value="success">Success</option>
+                                        <option value="failure">Failure</option>
+                                        <option value="both">Success, Failure</option>
+                                    </select>
+                                </div>
+                                <div class="policy-row">
+                                    <span class="policy-label">Audit account logon events</span>
+                                    <select class="policy-value" id="audit-account">
+                                        <option value="none">No auditing</option>
+                                        <option value="success">Success</option>
+                                        <option value="failure">Failure</option>
+                                        <option value="both">Success, Failure</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" onclick="applyAuditPolicy()" style="margin-top: 20px;">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Viewer -->
+                <div class="app-window" id="event-viewer" style="top: 12%; left: 25%;">
+                    <div class="window-titlebar">
+                        <span class="window-title">📊 Event Viewer - Security Log</span>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp('event-viewer')"></div>
+                        </div>
+                    </div>
+                    <div class="window-content">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <strong>Windows Logs → Security</strong>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #ecf0f1; text-align: left;">
+                                    <th style="padding: 10px;">Event ID</th>
+                                    <th style="padding: 10px;">Type</th>
+                                    <th style="padding: 10px;">Time</th>
+                                    <th style="padding: 10px;">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="event-log-body">
+                                <tr>
+                                    <td colspan="4" style="padding: 20px; text-align: center; color: #7f8c8d;">
+                                        Enable audit policies to see security events
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Overlays -->
+    <!-- Email Modal -->
+    <div class="modal-overlay" id="email-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📧 Email Inbox</h2>
+                <p>Sign Me Up Cyber - Corporate Email</p>
+            </div>
+            <div class="modal-body">
+                <ul class="email-list" id="email-list">
+                    <!-- Emails will be dynamically added -->
+                </ul>
+            </div>
+            <div style="padding: 20px; text-align: right; border-top: 1px solid #ecf0f1;">
+                <button class="btn btn-secondary" onclick="closeModal('email-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket Modal -->
+    <div class="modal-overlay" id="ticket-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎫 Ticket #2847</h2>
+                <p>New Employee Workstation Setup</p>
+            </div>
+            <div class="modal-body">
+                <div class="ticket-header" style="margin: 0; border-radius: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Status:</strong>
+                            <span class="ticket-status status-assigned" id="ticket-status">ASSIGNED</span>
+                        </div>
+                        <div>
+                            <strong>Priority:</strong> Medium | <strong>Due:</strong> Today 1:00 PM
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ticket-field">
+                    <label>FROM:</label>
+                    <p>Sarah Chen (IT Security Manager)</p>
+                </div>
+
+                <div class="ticket-field">
+                    <label>TO:</label>
+                    <p>You (Junior Security Analyst)</p>
+                </div>
+
+                <div class="ticket-field">
+                    <label>DESCRIPTION:</label>
+                    <p>New employee Jennifer Martinez (Sales Department) starts Monday 9/4/2023. Please prepare workstation WS-SALES-043 according to company security baseline.</p>
+                    <p style="margin-top: 10px;"><strong>Requirements:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 5px;">
+                        <li>Implement all required security controls per policy</li>
+                        <li>Document configuration in ticket notes</li>
+                        <li>Verify all controls are working</li>
+                        <li>Email me when complete for final check</li>
+                    </ul>
+                </div>
+
+                <div class="ticket-field">
+                    <label>NOTES:</label>
+                    <p>User will handle sensitive customer data (PII, credit cards). Security is critical. Follow baseline exactly.</p>
+                </div>
+
+                <div class="ticket-field">
+                    <label>ATTACHMENTS:</label>
+                    <ul class="attachment-list">
+                        <li class="attachment-item" onclick="openChecklist()">
+                            📎 Company_Security_Baseline.pdf
+                        </li>
+                    </ul>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-primary" onclick="acceptTicket()">Accept & Start Work</button>
+                </div>
+            </div>
+            <div style="padding: 20px; text-align: right; border-top: 1px solid #ecf0f1;">
+                <button class="btn btn-secondary" onclick="closeModal('ticket-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-notification" id="toast">
+        <div class="toast-icon">📧</div>
+        <div class="toast-content">
+            <div class="toast-title" id="toast-title">Notification</div>
+            <div class="toast-message" id="toast-message">Message</div>
+        </div>
+        <div class="toast-close" onclick="hideToast()">×</div>
+    </div>
+
+    <script>
+        // Lab State
+        let labState = {
+            startTime: null,
+            currentTime: '9:00 AM',
+            timeMinutes: 540, // 9:00 AM in minutes
+            ticketAccepted: false,
+            realtimeProtection: false,
+            cloudProtection: false,
+            sampleSubmission: false,
+            passwordLength: false,
+            passwordComplexity: false,
+            passwordHistory: false,
+            auditLogon: false,
+            auditAccount: false,
+            eventsViewed: false,
+            testsComplete: false,
+            objectivesComplete: [],
+            notes: [],
+            emails: []
+        };
+
+        // Initialize emails
+        function initializeEmails() {
+            labState.emails = [
+                {
+                    id: 1,
+                    from: 'Sarah Chen',
+                    subject: 'New Hire Workstation Setup - Ticket #2847',
+                    time: '9:00 AM',
+                    body: `Good morning!
+
+I have your first real ticket assigned to you. New employee Jennifer Martinez from Sales starts Monday, and we need her workstation ready by end of day today (1 PM deadline).
+
+Please check Ticket #2847 for full details and follow our standard security baseline. This is straightforward stuff - you've got this!
+
+Let me know if you have any questions.
+
+-Sarah Chen
+IT Security Manager
+Sign Me Up Cyber`,
+                    read: false
+                },
+                {
+                    id: 2,
+                    from: 'Sarah Chen',
+                    subject: 'Just checking in...',
+                    time: '9:15 AM',
+                    body: `Hey!
+
+Just wanted to check in and see how it's going with that workstation setup. Everything making sense? The security baseline should be pretty straightforward.
+
+Let me know if you hit any roadblocks!
+
+-Sarah`,
+                    read: false,
+                    delayed: true,
+                    showAfter: 15 // Show after 15 minutes
+                },
+                {
+                    id: 3,
+                    from: 'Sarah Chen',
+                    subject: 'FYI - Important context',
+                    time: '11:45 AM',
+                    body: `Quick heads up -
+
+Just learned that Jennifer will be handling credit card processing for some of our enterprise clients. That means PCI compliance is extra important.
+
+Make sure all the security controls are properly configured and documented. We can't have any gaps here.
+
+Thanks!
+-Sarah`,
+                    read: false,
+                    delayed: true,
+                    showAfter: 45
+                }
+            ];
+            renderEmails();
+        }
+
+        function renderEmails() {
+            const emailList = document.getElementById('email-list');
+            emailList.innerHTML = '';
+            
+            let unreadCount = 0;
+            labState.emails.forEach(email => {
+                if (email.delayed && labState.timeMinutes - 540 < email.showAfter) {
+                    return; // Don't show yet
+                }
+
+                const li = document.createElement('li');
+                li.className = 'email-item' + (email.read ? '' : ' unread');
+                li.innerHTML = `
+                    <div class="email-sender">${email.from}</div>
+                    <div class="email-subject">${email.subject}</div>
+                    <div class="email-time">${email.time}</div>
+                `;
+                li.onclick = () => viewEmail(email.id);
+                emailList.appendChild(li);
+
+                if (!email.read) unreadCount++;
+            });
+
+            document.getElementById('email-badge').textContent = unreadCount;
+            if (unreadCount === 0) {
+                document.getElementById('email-badge').style.display = 'none';
+            }
+        }
+
+        function viewEmail(id) {
+            const email = labState.emails.find(e => e.id === id);
+            if (!email) return;
+
+            email.read = true;
+            
+            const emailList = document.getElementById('email-list');
+            emailList.innerHTML = `
+                <div style="padding: 20px;">
+                    <button class="btn btn-secondary" onclick="renderEmails()" style="margin-bottom: 20px;">← Back to Inbox</button>
+                    <div>
+                        <div class="email-sender" style="font-size: 18px; margin-bottom: 10px;">${email.from}</div>
+                        <div class="email-subject" style="font-size: 16px; margin-bottom: 5px;">${email.subject}</div>
+                        <div class="email-time" style="margin-bottom: 20px;">${email.time}</div>
+                        <div class="email-body">${email.body}</div>
+                    </div>
+                </div>
+            `;
+            
+            renderEmails(); // Update badge count
+        }
+
+        function startLab() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('app').style.display = 'flex';
+            labState.startTime = Date.now();
+            initializeEmails();
+            addNote('9:05 AM - Lab started');
+            
+            // Auto-open email after 2 seconds
+            setTimeout(() => {
+                showToast('New Email', 'You have 3 new messages from Sarah Chen');
+                openEmail();
+            }, 2000);
+
+            // Start time progression
+            startTimeClock();
+        }
+
+        function startTimeClock() {
+            setInterval(() => {
+                labState.timeMinutes += 1;
+                updateTimeDisplay();
+            }, 2000); // 1 minute every 2 seconds (fast forward)
+        }
+
+        function updateTimeDisplay() {
+            const hours = Math.floor(labState.timeMinutes / 60);
+            const minutes = labState.timeMinutes % 60;
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours > 12 ? hours - 12 : hours;
+            labState.currentTime = `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+            
+            document.getElementById('current-time').textContent = labState.currentTime;
+            document.getElementById('taskbar-clock').textContent = `${labState.currentTime} | Mon 9/4/2023`;
+
+            // Check for new emails
+            renderEmails();
+
+            // Check if past deadline
+            if (labState.timeMinutes >= 780) { // 1:00 PM
+                document.getElementById('deadline-time').classList.add('deadline-warning');
+            }
+        }
+
+        function openEmail() {
+            document.getElementById('email-modal').classList.add('active');
+            document.getElementById('email-btn').classList.add('active');
+        }
+
+        function openTicket() {
+            document.getElementById('ticket-modal').classList.add('active');
+            document.getElementById('ticket-btn').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        }
+
+        function acceptTicket() {
+            if (labState.ticketAccepted) return;
+            
+            labState.ticketAccepted = true;
+            document.getElementById('ticket-status').textContent = 'IN PROGRESS';
+            document.getElementById('ticket-status').className = 'ticket-status status-in-progress';
+            addNote('9:08 AM - Ticket accepted, work started');
+            closeModal('ticket-modal');
+            showToast('Ticket Updated', 'Ticket #2847 status changed to IN PROGRESS');
+        }
+
+        function openSecurityApp() {
+            document.getElementById('security-app').classList.add('active');
+            addNote(`${labState.currentTime} - Opened Windows Security`);
+        }
+
+        function openSecurityPolicy() {
+            document.getElementById('security-policy').classList.add('active');
+            addNote(`${labState.currentTime} - Opened Local Security Policy`);
+        }
+
+        function openEventViewer() {
+            document.getElementById('event-viewer').classList.add('active');
+            addNote(`${labState.currentTime} - Opened Event Viewer`);
+            labState.eventsViewed = true;
+        }
+
+        function openChecklist() {
+            showToast('Security Baseline', 'Checklist is displayed in the left sidebar');
+        }
+
+        function closeApp(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function toggleRealtime() {
+            const toggle = document.getElementById('realtime-toggle');
+            labState.realtimeProtection = !labState.realtimeProtection;
+            toggle.classList.toggle('on');
+            
+            if (labState.realtimeProtection) {
+                addNote(`${labState.currentTime} - Enabled Windows Defender real-time protection`);
+                checkDefenderStatus();
+            }
+        }
+
+        function toggleCloud() {
+            const toggle = document.getElementById('cloud-toggle');
+            labState.cloudProtection = !labState.cloudProtection;
+            toggle.classList.toggle('on');
+            
+            if (labState.cloudProtection) {
+                addNote(`${labState.currentTime} - Enabled cloud-delivered protection`);
+                checkDefenderStatus();
+            }
+        }
+
+        function toggleSample() {
+            const toggle = document.getElementById('sample-toggle');
+            labState.sampleSubmission = !labState.sampleSubmission;
+            toggle.classList.toggle('on');
+            
+            if (labState.sampleSubmission) {
+                addNote(`${labState.currentTime} - Enabled automatic sample submission`);
+                checkDefenderStatus();
+            }
+        }
+
+        function checkDefenderStatus() {
+            if (labState.realtimeProtection && labState.cloudProtection && labState.sampleSubmission) {
+                document.getElementById('defender-status').innerHTML = '✅ <strong>All protection features enabled</strong>';
+                document.getElementById('defender-status').style.background = '#d4edda';
+                completeObjective(1);
+            }
+        }
+
+        function applyPasswordPolicy() {
+            const minLength = parseInt(document.getElementById('min-length').value);
+            const complexity = document.getElementById('complexity').value;
+            const history = parseInt(document.getElementById('history').value);
+
+            if (minLength >= 12) {
+                labState.passwordLength = true;
+                addNote(`${labState.currentTime} - Set minimum password length to ${minLength}`);
+            }
+
+            if (complexity === 'enabled') {
+                labState.passwordComplexity = true;
+                addNote(`${labState.currentTime} - Enabled password complexity requirements`);
+            }
+
+            if (history >= 5) {
+                labState.passwordHistory = true;
+                addNote(`${labState.currentTime} - Set password history to ${history}`);
+            }
+
+            if (labState.passwordLength && labState.passwordComplexity && labState.passwordHistory) {
+                showToast('Policy Applied', 'Password policy configured successfully');
+                completeObjective(2);
+            } else {
+                showToast('Incomplete', 'Make sure: Min length ≥ 12, Complexity enabled, History ≥ 5', 'warning');
+            }
+        }
+
+        function applyAuditPolicy() {
+            const auditLogon = document.getElementById('audit-logon').value;
+            const auditAccount = document.getElementById('audit-account').value;
+
+            if (auditLogon === 'both') {
+                labState.auditLogon = true;
+                addNote(`${labState.currentTime} - Enabled audit for logon events (Success, Failure)`);
+            }
+
+            if (auditAccount === 'both') {
+                labState.auditAccount = true;
+                addNote(`${labState.currentTime} - Enabled audit for account logon events (Success, Failure)`);
+            }
+
+            if (labState.auditLogon && labState.auditAccount) {
+                showToast('Policy Applied', 'Audit policies configured successfully');
+                completeObjective(3);
+                populateEventLog();
+            } else {
+                showToast('Incomplete', 'Set both policies to "Success, Failure"', 'warning');
+            }
+        }
+
+        function populateEventLog() {
+            const tbody = document.getElementById('event-log-body');
+            tbody.innerHTML = `
+                <tr style="border-bottom: 1px solid #ecf0f1;">
+                    <td style="padding: 10px;">4624</td>
+                    <td style="padding: 10px;">✅ Success</td>
+                    <td style="padding: 10px;">${labState.currentTime}</td>
+                    <td style="padding: 10px;">An account was successfully logged on</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ecf0f1;">
+                    <td style="padding: 10px;">4625</td>
+                    <td style="padding: 10px;">❌ Failure</td>
+                    <td style="padding: 10px;">8:45 AM</td>
+                    <td style="padding: 10px;">An account failed to log on</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ecf0f1;">
+                    <td style="padding: 10px;">4624</td>
+                    <td style="padding: 10px;">✅ Success</td>
+                    <td style="padding: 10px;">8:30 AM</td>
+                    <td style="padding: 10px;">An account was successfully logged on</td>
+                </tr>
+            `;
+
+            if (labState.eventsViewed) {
+                completeObjective(4);
+            }
+        }
+
+        function completeObjective(num) {
+            if (labState.objectivesComplete.includes(num)) return;
+            
+            labState.objectivesComplete.push(num);
+            
+            const checkItem = document.getElementById(`check-${num}`);
+            const checkbox = document.getElementById(`cb-${num}`);
+            checkItem.classList.add('completed');
+            checkbox.checked = true;
+
+            updateProgress();
+
+            const messages = [
+                'Malware protection configured!',
+                'Password policies set!',
+                'Audit policies enabled!',
+                'Security logs reviewed!',
+                'All tests complete!'
+            ];
+
+            showToast('✓ Objective Complete', messages[num - 1]);
+
+            if (labState.objectivesComplete.length === 5) {
+                setTimeout(completeTicket, 2000);
+            }
+        }
+
+        function updateProgress() {
+            const progress = (labState.objectivesComplete.length / 5) * 100;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+            document.getElementById('progress-fill').textContent = `${Math.round(progress)}%`;
+        }
+
+        function addNote(note) {
+            labState.notes.push(note);
+            const container = document.getElementById('notes-container');
+            const div = document.createElement('div');
+            div.className = 'note-entry';
+            div.textContent = note;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function completeTicket() {
+            // Close all windows
+            document.querySelectorAll('.app-window').forEach(w => w.classList.remove('active'));
+            
+            // Show completion modal
+            const modal = document.getElementById('email-modal');
+            const content = modal.querySelector('.modal-body');
+            
+            content.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                    <h2 style="color: #27ae60; margin-bottom: 20px;">All Requirements Complete!</h2>
+                    <p style="font-size: 18px; margin-bottom: 30px;">You've configured all security controls per the baseline.</p>
+                    <button class="btn btn-primary" onclick="submitForReview()">Submit Ticket for Manager Review</button>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+
+        function submitForReview() {
+            closeModal('email-modal');
+            
+            // Show manager review
+            setTimeout(() => {
+                showManagerReview();
+            }, 1000);
+        }
+
+        function showManagerReview() {
+            const modal = document.getElementById('email-modal');
+            const content = modal.querySelector('.modal-body');
+            
+            const timeElapsed = Math.round((labState.timeMinutes - 540));
+            
+            content.innerHTML = `
+                <div class="results-screen">
+                    <h2>👩‍💼 Manager Review - Sarah Chen</h2>
+                    <p style="margin: 20px 0; font-style: italic;">"Let me check your work..."</p>
+                    
+                    <div id="review-progress" style="text-align: left; background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <div class="result-item">
+                            <span class="result-icon">⏳</span>
+                            <div class="result-details">
+                                <div class="result-title">Checking Windows Defender configuration...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+
+            // Simulate manager checking each item
+            const checks = [
+                { delay: 2000, text: 'Checking Windows Defender configuration...', pass: true },
+                { delay: 4000, text: 'Checking password policy settings...', pass: true },
+                { delay: 6000, text: 'Checking audit policy configuration...', pass: true },
+                { delay: 8000, text: 'Reviewing security event logs...', pass: true },
+                { delay: 10000, text: 'Verifying documentation...', pass: true }
+            ];
+
+            checks.forEach((check, index) => {
+                setTimeout(() => {
+                    const progress = document.getElementById('review-progress');
+                    if (index < checks.length - 1) {
+                        progress.innerHTML += `
+                            <div class="result-item">
+                                <span class="result-icon">✅</span>
+                                <div class="result-details">
+                                    <div class="result-title">${checks[index].text.replace('...', '')} - Complete</div>
+                                </div>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-icon">⏳</span>
+                                <div class="result-details">
+                                    <div class="result-title">${checks[index + 1].text}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        progress.innerHTML += `
+                            <div class="result-item">
+                                <span class="result-icon">✅</span>
+                                <div class="result-details">
+                                    <div class="result-title">${checks[index].text.replace('...', '')} - Complete</div>
+                                </div>
+                            </div>
+                        `;
+                        setTimeout(() => showFinalResults(timeElapsed), 1000);
+                    }
+                }, check.delay);
+            });
+        }
+
+        function showFinalResults(timeElapsed) {
+            const modal = document.getElementById('email-modal');
+            const content = modal.querySelector('.modal-body');
+            
+            const percentage = (labState.objectivesComplete.length / 5) * 100;
+            const passed = labState.objectivesComplete.length === 5;
+
+            // Check what specifically was completed/missed
+            const req1 = labState.objectivesComplete.includes(1);
+            const req2 = labState.objectivesComplete.includes(2);
+            const req3 = labState.objectivesComplete.includes(3);
+            const req4 = labState.objectivesComplete.includes(4);
+            const req5 = labState.objectivesComplete.includes(5);
+
+            let resultsHTML = `
+                <div class="results-screen">
+                    <h2 style="color: #2c3e50; margin-bottom: 30px;">🎯 Manager Review - Sarah Chen</h2>
+                    
+                    <div class="results-score" style="color: ${passed ? '#27ae60' : '#e67e22'}">${percentage}%</div>
+                    <div class="results-grade">${passed ? 'EXCELLENT WORK' : 'NEEDS IMPROVEMENT'}</div>
+
+                    <div class="results-breakdown">
+                        <h3 style="margin-bottom: 20px;">Detailed Configuration Check</h3>
+            `;
+
+            // Requirement 1: Malware Protection
+            if (req1) {
+                resultsHTML += `
+                    <div class="result-item">
+                        <span class="result-icon">✅</span>
+                        <div class="result-details">
+                            <div class="result-title">Requirement 1: Malware Protection - COMPLETE</div>
+                            <div class="result-description">
+                                ✓ Real-time protection: Enabled<br>
+                                ✓ Cloud-delivered protection: Enabled<br>
+                                ✓ Automatic sample submission: Enabled
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsHTML += `
+                    <div class="result-item failed">
+                        <span class="result-icon">❌</span>
+                        <div class="result-details">
+                            <div class="result-title">Requirement 1: Malware Protection - INCOMPLETE</div>
+                            <div class="result-description" style="color: #e74c3c;">
+                                ${!labState.realtimeProtection ? '✗ Real-time protection not enabled<br>' : ''}
+                                ${!labState.cloudProtection ? '✗ Cloud-delivered protection not enabled<br>' : ''}
+                                ${!labState.sampleSubmission ? '✗ Automatic sample submission not enabled<br>' : ''}
+                            </div>
+                            <button class="btn btn-secondary" onclick="showRemediation(1)" style="margin-top: 10px; font-size: 13px;">
+                                📖 Show Me How to Fix This
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Requirement 2: Password Security
+            if (req2) {
+                resultsHTML += `
+                    <div class="result-item">
+                        <span class="result-icon">✅</span>
+                        <div class="result-details">
+                            <div class="result-title">Requirement 2: Password Security - COMPLETE</div>
+                            <div class="result-description">
+                                ✓ Minimum password length: 12<br>
+                                ✓ Password complexity: Enabled<br>
+                                ✓ Password history: 5
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsHTML += `
+                    <div class="result-item failed">
+                        <span class="result-icon">❌</span>
+                        <div class="result-details">
+                            <div class="result-title">Requirement 2: Password Security - INCOMPLETE</div>
+                            <div class="result-description" style="color: #e74c3c;">
+                                ${!labState.passwordLength ? '✗ Minimum password length not set to 12<br>' : ''}
+                                ${!labState.passwordComplexity ? '✗ Password complexity not enabled<br>' : ''}
+                                ${!labState.passwordHistory ? '✗ Password history not set to 5<br>' : ''}
+                            </div>
+                            <button class="btn btn-secondary" onclick="showRemediation(2)" style="margin-top: 10px; font-size: 13px;">
+                                📖 Show Me How to Fix This
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Requirement 3: Audit & Monitoring
+            if (req3) {
+                resultsHTML += `
+                    <div class="result-item">
+                        <span class="result-icon">✅</span>
+                        <div class="result-details">
+                            <div class="result-title">Requirement 3: Audit & Monitoring - COMPLETE</div>
+                            <div class="result-description">
+                                ✓ Audit logon events: Success, Failure<br>
+                                ✓ Audit account logon events: Success, Failure
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsHTML += `
+                    <div class="result-item failed">
+                        <span class="result-icon">❌</span>
+                        <div class="result-details">
+                            <div class="result-title">Requirement 3: Audit & Monitoring - INCOMPLETE</div>
+                            <div class="result-description" style="color: #e74c3c;">
+                                ${!labState.auditLogon ? '✗ Audit logon events not set to Success, Failure<br>' : ''}
+                                ${!labState.auditAccount ? '✗ Audit account logon not set to Success, Failure<br>' : ''}
+                            </div>
+                            <button class="btn btn-secondary" onclick="showRemediation(3)" style="margin-top: 10px; font-size: 13px;">
+                                📖 Show Me How to Fix This
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Requirement 4: Log Review
+            if (req4) {
+                resultsHTML += `
+                    <div class="result-item">
+                        <span class="result-icon">✅</span>
+                        <div class="result-details">
+                            <div class="result-title">Requirement 4: Security Log Review - COMPLETE</div>
+                            <div class="result-description">
+                                ✓ Event Viewer opened<br>
+                                ✓ Security logs reviewed<br>
+                                ✓ Event types identified
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsHTML += `
+                    <div class="result-item failed">
+                        <span class="result-icon">❌</span>
+                        <div class="result-details">
+                            <div class="result-title">Requirement 4: Security Log Review - INCOMPLETE</div>
+                            <div class="result-description" style="color: #e74c3c;">
+                                ✗ Security logs not reviewed in Event Viewer
+                            </div>
+                            <button class="btn btn-secondary" onclick="showRemediation(4)" style="margin-top: 10px; font-size: 13px;">
+                                📖 Show Me How to Do This
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            resultsHTML += `</div>`; // Close results-breakdown
+
+            // Manager feedback
+            if (passed) {
+                resultsHTML += `
+                    <div class="manager-review">
+                        <p><strong>From: Sarah Chen, IT Security Manager</strong></p>
+                        <p style="margin-top: 15px;">
+                        Excellent work on your first ticket! I'm really impressed with how thoroughly you configured everything. All security controls are properly implemented and your documentation is clear and detailed.
+                        </p>
+                        <p style="margin-top: 10px;">
+                        I especially appreciate how you verified each control after enabling it - that attention to detail is exactly what we need on this team.
+                        </p>
+                        <p style="margin-top: 10px;">
+                        Workstation WS-SALES-043 is approved for deployment. Keep up the great work!
+                        </p>
+                        <p style="margin-top: 15px;"><strong>Status: APPROVED ✅ | +5 Performance Points 🌟</strong></p>
+                    </div>
+
+                    <div style="margin-top: 30px; padding: 20px; background: #e8f5e9; border-radius: 8px;">
+                        <strong>Time Taken:</strong> ${timeElapsed} minutes (Well under deadline!)<br>
+                        <strong>Quality:</strong> All controls verified working<br>
+                        <strong>Overall Rating:</strong> EXCEEDS EXPECTATIONS
+                    </div>
+
+                    <div style="margin-top: 30px; background: #fff3cd; padding: 20px; border-radius: 8px; border-left: 4px solid #f39c12;">
+                        <h4 style="margin-bottom: 10px;">🎓 What You Learned</h4>
+                        <ul style="margin-left: 20px; line-height: 1.8;">
+                            <li>Implementing preventive controls (Windows Defender, password policies)</li>
+                            <li>Configuring detective controls (audit policies, log monitoring)</li>
+                            <li>Following security baselines and documentation requirements</li>
+                            <li>Professional ticketing and communication</li>
+                            <li>Time management under deadline pressure</li>
+                        </ul>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="downloadCertificate()">📥 Download Certificate</button>
+                        <button class="btn btn-secondary" onclick="viewDetailedReport()">📊 View Detailed Report</button>
+                    </div>
+                `;
+            } else {
+                resultsHTML += `
+                    <div class="manager-review" style="background: #fff3cd; border-left-color: #f39c12;">
+                        <p><strong>From: Sarah Chen, IT Security Manager</strong></p>
+                        <p style="margin-top: 15px;">
+                        Thanks for submitting your work. I can see you made good progress, but there are a few requirements that still need attention before we can deploy this workstation.
+                        </p>
+                        <p style="margin-top: 10px;">
+                        I've marked the specific items that need to be fixed above. Click "Show Me How to Fix This" on any incomplete requirement for detailed step-by-step instructions.
+                        </p>
+                        <p style="margin-top: 10px;">
+                        Take your time to review the requirements and try again. Don't worry - this is how we all learn! The important thing is understanding WHY each security control matters.
+                        </p>
+                        <p style="margin-top: 15px;"><strong>Status: NEEDS REVISION 🔄</strong></p>
+                    </div>
+
+                    <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #f39c12;">
+                        <strong>Requirements Complete:</strong> ${labState.objectivesComplete.length}/5<br>
+                        <strong>Score:</strong> ${percentage}%<br>
+                        <strong>Next Steps:</strong> Review failed items and retry
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="retryLab()">🔄 Fix Issues & Retry</button>
+                        <button class="btn btn-secondary" onclick="viewAllGuidance()">📖 View All Step-by-Step Guides</button>
+                    </div>
+                `;
+            }
+
+            resultsHTML += `
+                    <p style="margin-top: 30px; color: #7f8c8d; font-size: 14px;">
+                        Your results have been saved to the instructor dashboard.
+                    </p>
+                </div>
+            `;
+
+            content.innerHTML = resultsHTML;
+        }
+
+        function showRemediation(requirement) {
+            const modal = document.getElementById('email-modal');
+            const content = modal.querySelector('.modal-body');
+
+            const guides = {
+                1: {
+                    title: 'Malware Protection',
+                    problem: 'Windows Defender protection features are not fully enabled.',
+                    why: 'Without all three protection features enabled, the workstation is vulnerable to malware attacks. Real-time protection stops threats as they happen. Cloud protection uses Microsoft\'s global threat intelligence. Sample submission helps improve detection for everyone.',
+                    steps: [
+                        'Click the <strong>Windows Security</strong> icon on the desktop',
+                        'Click <strong>Virus & threat protection</strong>',
+                        'Under "Virus & threat protection settings", click <strong>Manage settings</strong>',
+                        'Toggle <strong>Real-time protection</strong> to ON (it will turn green)',
+                        'Toggle <strong>Cloud-delivered protection</strong> to ON',
+                        'Toggle <strong>Automatic sample submission</strong> to ON',
+                        'Verify the status at the top shows "No actions needed" in green'
+                    ],
+                    concept: 'This is a <strong>Preventive Technical Control</strong> - it uses technology to automatically stop malware before it can run.'
+                },
+                2: {
+                    title: 'Password Security',
+                    problem: 'Password policy settings do not meet company security standards.',
+                    why: 'Weak password policies allow users to create easily guessed passwords. A 12-character minimum significantly increases crack time. Complexity requirements prevent dictionary attacks. Password history stops users from reusing the same passwords repeatedly.',
+                    steps: [
+                        'Click the <strong>Local Security Policy</strong> icon on the desktop',
+                        'In the left pane, expand <strong>Account Policies</strong>',
+                        'Click <strong>Password Policy</strong>',
+                        'In the right pane, locate and change these settings:',
+                        '• <strong>Minimum password length</strong>: Set to <strong>12</strong> and click Apply',
+                        '• <strong>Password must meet complexity requirements</strong>: Set to <strong>Enabled</strong> and click Apply',
+                        '• <strong>Enforce password history</strong>: Set to <strong>5</strong> and click Apply',
+                        'Verify all three settings show the correct values'
+                    ],
+                    concept: 'This is a <strong>Preventive Administrative Control</strong> - it uses policy/rules to prevent weak passwords before they\'re created.'
+                },
+                3: {
+                    title: 'Audit & Monitoring',
+                    problem: 'Audit policies are not properly configured to log security events.',
+                    why: 'Without audit logging, you can\'t detect unauthorized access attempts or investigate security incidents. Logging both successes and failures gives you complete visibility into who is accessing the system and when attacks might be occurring.',
+                    steps: [
+                        'Click the <strong>Local Security Policy</strong> icon on the desktop',
+                        'In the left pane, expand <strong>Local Policies</strong>',
+                        'Click <strong>Audit Policy</strong>',
+                        'In the right pane, configure these policies:',
+                        '• Double-click <strong>Audit logon events</strong>',
+                        '• Check BOTH <strong>Success</strong> and <strong>Failure</strong>',
+                        '• Click Apply, then OK',
+                        '• Double-click <strong>Audit account logon events</strong>',
+                        '• Check BOTH <strong>Success</strong> and <strong>Failure</strong>',
+                        '• Click Apply, then OK',
+                        'Both policies should now show "Success, Failure"'
+                    ],
+                    concept: 'This is a <strong>Detective Technical Control</strong> - it uses automated logging to detect and record security events for investigation.'
+                },
+                4: {
+                    title: 'Security Log Review',
+                    problem: 'Security event logs were not reviewed.',
+                    why: 'Audit policies are useless if no one looks at the logs. Reviewing logs helps you spot attack patterns, verify controls are working, and meet compliance requirements. Event IDs 4624 and 4625 show successful and failed login attempts.',
+                    steps: [
+                        'Click the <strong>Event Viewer</strong> icon on the desktop',
+                        'In the left pane, expand <strong>Windows Logs</strong>',
+                        'Click <strong>Security</strong>',
+                        'The center pane shows recent security events',
+                        'Look for these Event IDs:',
+                        '• <strong>4624</strong> = Successful logon (shows who logged in)',
+                        '• <strong>4625</strong> = Failed logon (shows attack attempts)',
+                        'Click on an event to see details like username, time, and source',
+                        'This completes the log review requirement'
+                    ],
+                    concept: 'This is using <strong>Detective Controls</strong> - reviewing logged events to understand what happened on the system.'
+                }
+            };
+
+            const guide = guides[requirement];
+
+            content.innerHTML = `
+                <div style="padding: 30px;">
+                    <h2 style="color: #e74c3c; margin-bottom: 20px;">📖 Step-by-Step Remediation Guide</h2>
+                    <h3 style="color: #2c3e50;">Requirement ${requirement}: ${guide.title}</h3>
+
+                    <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f39c12;">
+                        <h4 style="margin-bottom: 10px;">⚠️ What Went Wrong:</h4>
+                        <p>${guide.problem}</p>
+                    </div>
+
+                    <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #27ae60;">
+                        <h4 style="margin-bottom: 10px;">💡 Why This Matters:</h4>
+                        <p>${guide.why}</p>
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h4 style="margin-bottom: 15px;">🔧 How to Fix It:</h4>
+                        <ol style="line-height: 2; margin-left: 20px;">
+                            ${guide.steps.map(step => `<li>${step}</li>`).join('')}
+                        </ol>
+                    </div>
+
+                    <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196f3;">
+                        <h4 style="margin-bottom: 10px;">🎓 Security Concept:</h4>
+                        <p>${guide.concept}</p>
+                    </div>
+
+                    <div style="margin-top: 30px; text-align: center;">
+                        <button class="btn btn-primary" onclick="retryLab()">🔄 I'm Ready - Let Me Try Again</button>
+                        <button class="btn btn-secondary" onclick="showFinalResults(${Math.round((labState.timeMinutes - 540))})">← Back to Results</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function viewAllGuidance() {
+            const modal = document.getElementById('email-modal');
+            const content = modal.querySelector('.modal-body');
+
+            content.innerHTML = `
+                <div style="padding: 30px;">
+                    <h2 style="color: #2c3e50; margin-bottom: 20px;">📚 Complete Step-by-Step Guide</h2>
+                    <p style="margin-bottom: 30px;">Here are detailed instructions for all 5 requirements:</p>
+
+                    ${[1, 2, 3, 4].map(req => `
+                        <button class="btn btn-secondary" onclick="showRemediation(${req})" style="margin: 5px; width: 100%; text-align: left;">
+                            📖 Requirement ${req}: ${['Malware Protection', 'Password Security', 'Audit & Monitoring', 'Security Log Review'][req-1]}
+                        </button>
+                    `).join('')}
+
+                    <div style="margin-top: 30px; text-align: center;">
+                        <button class="btn btn-primary" onclick="retryLab()">🔄 Retry Lab Now</button>
+                        <button class="btn btn-secondary" onclick="showFinalResults(${Math.round((labState.timeMinutes - 540))})">← Back to Results</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function retryLab() {
+            if (confirm('This will reset your progress and let you try again. Are you sure?')) {
+                location.reload();
+            }
+        }
+
+        function downloadCertificate() {
+            showToast('Certificate', 'Completion certificate downloaded! (Simulated)');
+        }
+
+        function viewDetailedReport() {
+            const report = {
+                studentName: 'Lab Participant',
+                labName: 'Lab 1: Security Controls Implementation',
+                completionDate: new Date().toLocaleDateString(),
+                score: '100%',
+                timeElapsed: Math.round((labState.timeMinutes - 540)) + ' minutes',
+                objectivesCompleted: labState.objectivesComplete,
+                notes: labState.notes
+            };
+
+            console.log('Detailed Report:', report);
+            showToast('Report', 'Detailed report logged to console (F12 to view)');
+            
+            // In production, this would save to Firebase
+            alert('Report data:\n\n' + JSON.stringify(report, null, 2));
+        }
+
+        function showToast(title, message, type = 'info') {
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-message').textContent = message;
+            document.getElementById('toast').classList.add('show');
+
+            setTimeout(() => {
+                hideToast();
+            }, 5000);
+        }
+
+        function hideToast() {
+            document.getElementById('toast').classList.remove('show');
+        }
+
+        function showHelp() {
+            showToast('Help', 'Use the Security Baseline checklist (left sidebar) to track your progress. Open applications from the desktop to configure security settings.');
+        }
+
+        // Initialize
+        window.onload = function() {
+            // Ready to start
+        };
+    </script>
+</body>
+</html>
